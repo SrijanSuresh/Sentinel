@@ -1,16 +1,25 @@
-import os, sys, subprocess, time, psutil
+import os, sys, subprocess, time, psutil, socket
 
 class ManagedProcess:
     def __init__(self, command, limit):
         self.cmd = command
         self.limit = limit
         self.process = None
+        self.socket_path = "/tmp/sentinel.sock"
+        self.server = None
 
     def start(self):
         # we start the process
         self.process = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         # to make sure the output pipe is non blocking so that .read() doesn't freeze our loop
         os.set_blocking(self.process.stdout.fileno(), False)
+        if os.path.exists(self.socket_path):
+            os.unlink(self.socket_path) # removes binded file to avoid collision
+        # socket creation Unix Domain Sockets (IPC)
+        self.server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.server.bind(self.socket_path)
+        self.server.listen(1)
+        self.server.setblocking(False) # turn off blocking so that we dont pause the child process
 
     def poll(self):
         # returns True if the status is not running
@@ -44,6 +53,18 @@ class ManagedProcess:
         except ProcessNotFoundError as e:
             print(f"{e}: race condition, process ended before memory calculation")
 
+    def handle_ipc(self):
+        try:
+            conn, _ = self.server.accept()
+            with conn:
+                data = conn.recv(1024).decode().strip()
+                if data == "status":
+                    status_msg = f"Status: {self.get_status()} | PID: {self.process.pid}"
+                    conn.sendall(status_msg.encode())
+        except (BlockingIOError, socket.error):
+            # skip since no communication
+            pass
+
 def main():
     # we skip our script name and just get the command
     cmd = sys.argv[1:]
@@ -60,9 +81,11 @@ def main():
     # Manage Process while it's running
     while Process.get_status() == "RUNNING":
         print(f"Heartbeat: Process {Process.process.pid} is still alive...")
-        time.sleep(1)
+        # checking incoming commands (IPC)
+        Process.handle_ipc()
         # lets verify our mem-usage here
-        Process.check_resources()
+        Process.check_resources() 
+        time.sleep(1)
 
     print(Process.get_status())
     return sys.exit(0)
