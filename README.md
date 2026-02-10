@@ -3,31 +3,77 @@
 <img width="983" height="781" alt="image" src="https://github.com/user-attachments/assets/38b283c2-2daa-42c1-85de-f0e8d9e75ff8" />
 
 
-## What is this?
-Sentinel is a lightweight, modular "sidecar" I built to babysit Linux processes. It’s essentially a focused SRE tool that watches a child process, monitors its physical memory (RSS) in real-time, and provides a "backdoor" via Unix Domain Sockets so I can talk to it without interrupting the main loop.
+### Core Concepts
 
-## The "Why"
-I wanted to understand exactly how tools like systemd or Kubernetes handle resource limits and health checks at the kernel level. Instead of just using them, I decided to build a "mini" version from scratch to handle:
+* **Tiered Termination:** Sentinel isn't just a blunt instrument. It tries a polite `SIGTERM` (Signal 15) first to let the process clean up its mess, waits 3 seconds, and then brings out the `SIGKILL` (Signal 9) only if the process is totally hung.
+* **Non-Blocking IPC:** I used `socket.AF_UNIX` with non-blocking mode. This means the guardian can "glance" at the socket for incoming commands without freezing the main monitoring loop.
+* **Observability:**
+* **TUI Dashboard:** A live terminal table built with `rich` so you can see PIDs and memory usage in real-time.
+* **Prometheus Exporter:** Sentinel exposes an HTTP endpoint on port 8000. Prometheus pulls these metrics every 5 seconds.
+* **Grafana:** I use this to turn raw numbers into staircase graphs that make memory leaks obvious.
 
-- Memory Leaks: If a process (like my chaos.py bomb) starts eating RAM, Sentinel catches it and kills it before the OOM Killer crashes my whole WSL instance.
-- Asynchronous Control: I wanted to be able to "ping" my monitor from a different terminal to get a status report without stopping the execution.
 
-## The "Nitty Gritty" (What I actually did)
-- Modular Architecture: I refactored the whole thing into a sentinel_pkg. One module handles the Guardian (the enforcer) and another handles the IPC (the mailbox).
-- Non-Blocking Sockets: This was the biggest hurdle. I used socket.AF_UNIX and set it to non-blocking mode (setblocking(False)). This allows the script to "glance" at the socket for commands and then immediately go back to checking memory—no freezing allowed.
-- Tiered Termination: I didn't just SIGKILL everything. I implemented a "polite" SIGTERM, waited 3 seconds, and only then brought out the hammer (SIGKILL) if the process was hung.
-- Live Dashboard: I integrated the rich library to create a clean TUI (Terminal User Interface) so I don't have to look at scrolling logs. I get a live table with PIDs and memory stats.
 
-## Current Tech Stack
-- Language: Python 3 (specifically avoiding the heavy stuff, focusing on subprocess, socket, and os).
-- Library: psutil for deep-diving into the /proc filesystem.
-- Interface: rich for the TUI and netcat for IPC testing.
+---
 
-## What's Next?
-- Prometheus Exporter: Turning Sentinel into a metrics endpoint so I can see these stats in Grafana.
-- Docker Sidecar: Wrapping this as a container manager.
+### File Breakdown
 
-## How to verify the work
-- Fire it up: sentinel python3 chaos.py
-- Poke it: From another terminal: echo "status" | nc -U /tmp/sentinel.socket
-- Watch it die: Watch the dashboard as chaos.py hits the 100MB limit and Sentinel executes the kill.
+* **`main.py`**: The entry point. It orchestrates the startup, initializes the `Guardian` and `IPCServer`, and runs the main loop that updates the `rich` dashboard.
+* **`sentinel_pkg/guardian.py`**: The "brain." It uses `subprocess` to spawn the child process and `psutil` to query the `/proc` filesystem for Resident Set Size (RSS) memory. It also contains the tiered logic for `SIGTERM` and `SIGKILL`.
+* **`sentinel_pkg/ipc.py`**: Handles the Unix Domain Socket server. It listens at `/tmp/sentinel.socket` and uses a non-blocking check to see if any external client (like `nc`) is sending commands.
+* **`sentinel_pkg/metrics.py`**: Sets up the Prometheus `Gauge` objects and starts the HTTP server. It includes a `try/except` block to handle port 8000 collisions, allowing the monitor to fail gracefully if another instance is already reporting.
+* **`tests/leaker.py`**: A "chaos" script designed to simulate a memory leak by steadily appending data to a list, used to verify that Sentinel actually kills rogue processes.
+
+---
+
+### Setup and Launch
+
+**1. Build the environment**
+Start the observability stack (Prometheus and Grafana) in the background:
+
+```bash
+docker-compose up -d prometheus grafana
+
+```
+
+**2. Launch the Sentinel Workstation**
+Start the Sentinel container in an interactive bash session:
+
+```bash
+docker-compose run --rm sentinel /bin/bash
+
+```
+
+**3. Run a test case**
+Inside the container, run the memory leaker:
+
+```bash
+sentinel python3 tests/leaker.py
+
+```
+
+### Testing the "Backdoor"
+
+Open a **second terminal** on your host and run this to poke the guardian while it's working:
+
+```bash
+# Get a status report via the IPC socket
+echo "status" | nc -U /tmp/sentinel.socket
+
+# Force a remote stop
+echo "stop" | nc -U /tmp/sentinel.socket
+
+```
+
+---
+
+### What's Next?
+
+* **cgroups v2 Integration:** Moving beyond RSS polling to use true Linux kernel container limits.
+* **Multi-process Supervision:** Adding the ability to watch a cluster of processes with custom alerting rules.
+* **Alerting Pipelines:** Hooking Prometheus up to Slack or webhooks for instant notifications.
+* **Helm Charts:** Packaging this as a Kubernetes sidecar for easy cloud deployment.
+* **eBPF Metrics:** Diving deeper into kernel tracing for zero-overhead observability.
+
+---
+
