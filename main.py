@@ -1,8 +1,9 @@
-import sys, time
+import sys, time, psutil
 from rich.live import Live
 from rich.table import Table
 from sentinel_pkg.guardian import Guardian
 from sentinel_pkg.ipc import IPCServer
+from sentinel_pkg.metrics import MEMORY_USAGE, PROCESS_STATUS, start_metric_server
 
 def generate_dashboard(guardian):
     # Generate a real-time table UI
@@ -33,11 +34,19 @@ def main():
 
     guardian.start()
     server.start()
-
-    # Manage Process while it's running
+    # we start our metric tracking right before we enter loop
+    start_metric_server(8000)
+    # manage process while it's running
     with Live(generate_dashboard(guardian), refresh_per_second=4) as live:
         try:
             while not guardian.poll():
+                if guardian.process:
+                    try:
+                        # grabbing rss memory in mb
+                        mem = psutil.Process(guardian.process.pid).memory_info().rss / (1024**2)
+                        MEMORY_USAGE.set(mem)
+                    except psutil.NoSuchProcess:
+                        MEMORY_USAGE.set(0) # no memory sicne no process
                 # checking incoming commands (IPC)
                 conn, msg = server.check_for_client()
                 if msg:
