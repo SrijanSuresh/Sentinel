@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  sentinel:
+    build: .
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true
+    command: ["tail", "-f", "/dev/null"]
+  prometheus:
+    image: prom/prometheus
+    user: root
+    ports:
+      # prometheus UI port
+      - "9090:9090" 
+    volumes:
+      - ./prometheus_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      # fix for linux/wsl networking
+      - "host.docker.internal:host-gateway"
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus

@@ -36,17 +36,23 @@ def main():
     server.start()
     # we start our metric tracking right before we enter loop
     start_metric_server(8000)
+    time.sleep(1)
     # manage process while it's running
     with Live(generate_dashboard(guardian), refresh_per_second=4) as live:
         try:
             while not guardian.poll():
                 if guardian.process:
                     try:
-                        # grabbing rss memory in mb
-                        mem = psutil.Process(guardian.process.pid).memory_info().rss / (1024**2)
+                        p = psutil.Process(guardian.process.pid)
+                        # oneshot to minimize system calls in Docker
+                        with p.oneshot():
+                            mem = p.memory_info().rss / (1024**2)
                         MEMORY_USAGE.set(mem)
-                    except psutil.NoSuchProcess:
-                        MEMORY_USAGE.set(0) # no memory sicne no process
+                        PROCESS_STATUS.set(1)
+                    except (psutil.NoSuchProcess):
+                        # in case there is no process
+                        MEMORY_USAGE.set(0)
+                        PROCESS_STATUS.set(0)
                 # checking incoming commands (IPC)
                 conn, msg = server.check_for_client()
                 if msg:
@@ -62,8 +68,9 @@ def main():
                 # update dashboard
                 live.update(generate_dashboard(guardian))
                 time.sleep(0.5)
-        except KeyboardInterrupt:
-            print("\nSentinel shutting down..")
+        except Exception as e:
+            # if crashes we can detect here
+            print(f"CRASH DETECTED: {e}")
             guardian.kill()
 
     print(f"Final report:{guardian.get_status()}")
