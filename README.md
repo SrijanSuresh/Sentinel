@@ -1,4 +1,8 @@
 # Sentinel: Custom Process Guardian 
+## Architecture
+<img width="983" height="781" alt="image" src="https://github.com/user-attachments/assets/38b283c2-2daa-42c1-85de-f0e8d9e75ff8" />
+
+
 ## What is this?
 Sentinel is a lightweight, modular "sidecar" I built to babysit Linux processes. It’s essentially a focused SRE tool that watches a child process, monitors its physical memory (RSS) in real-time, and provides a "backdoor" via Unix Domain Sockets so I can talk to it without interrupting the main loop.
 
