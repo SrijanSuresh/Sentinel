@@ -1,7 +1,15 @@
 # Sentinel: Custom Process Guardian 
+Think of Sentinel as a digital "bouncer" for your computer. It’s a high-performance tool designed to watch specific programs (like games, data science models, or servers) and make sure they don’t "misbehave" by hogging all your system’s memory.
+
 ## Architecture
 <img width="983" height="781" alt="image" src="https://github.com/user-attachments/assets/38b283c2-2daa-42c1-85de-f0e8d9e75ff8" />
 
+## Terminal UI
+<img width="647" height="130" alt="image" src="https://github.com/user-attachments/assets/ed2d995c-9ef6-4020-ae5c-c459622b3a0d" />
+
+## Dashboard
+<img width="1222" height="476" alt="gauge_mod" src="https://github.com/user-attachments/assets/e84ec790-d61a-4f9f-b006-bf63b06fffa9" />
+<img width="1215" height="423" alt="test_mod" src="https://github.com/user-attachments/assets/53183c75-8065-48e2-8b06-8c4bea835161" />
 
 ### Core Concepts
 
