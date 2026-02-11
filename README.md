@@ -19,7 +19,7 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 * **TUI Dashboard:** A live terminal table built with `rich` so you can see PIDs and memory usage in real-time.
 * **Prometheus Exporter:** Sentinel exposes an HTTP endpoint on port 8000. Prometheus pulls these metrics every 5 seconds.
 * **Grafana:** I use this to turn raw numbers into staircase graphs that make memory leaks obvious.
-
+* **Limit** You can set a custom limit, default is 512 mb.
 
 
 ---
@@ -30,7 +30,7 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 * **`sentinel_pkg/guardian.py`**: The "brain." It uses `subprocess` to spawn the child process and `psutil` to query the `/proc` filesystem for Resident Set Size (RSS) memory. It also contains the tiered logic for `SIGTERM` and `SIGKILL`.
 * **`sentinel_pkg/ipc.py`**: Handles the Unix Domain Socket server. It listens at `/tmp/sentinel.socket` and uses a non-blocking check to see if any external client (like `nc`) is sending commands.
 * **`sentinel_pkg/metrics.py`**: Sets up the Prometheus `Gauge` objects and starts the HTTP server. It includes a `try/except` block to handle port 8000 collisions, allowing the monitor to fail gracefully if another instance is already reporting.
-* **`tests/leaker.py`**: A "chaos" script designed to simulate a memory leak by steadily appending data to a list, used to verify that Sentinel actually kills rogue processes.
+* **`tests/chaos.py`**: A "chaos" script designed to simulate a memory leak by steadily appending data to a list, used to verify that Sentinel actually kills rogue processes.
 
 ---
 
