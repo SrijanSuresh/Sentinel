@@ -5,4 +5,4 @@ scrape_configs:
   - job_name: 'sentinel monitor'
     static_configs:
       # redirecting the target of prometheus to our local machine's(in this case docker) port
-      - targets: ['sentinel:8000']
+      - targets: ['host.docker.internal:8000']

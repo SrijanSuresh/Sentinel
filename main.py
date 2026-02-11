@@ -22,7 +22,7 @@ def generate_dashboard(guardian):
 def main():
     # we skip our script name and just get the command
     cmd = sys.argv[1:]
-    limit = 100 # limit by 100mb
+    limit = 512 # limit by 100mb
     # we verify if our command exists
     if not cmd:
         print("Usage: python script.py <command>")
