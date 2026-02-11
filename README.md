@@ -40,7 +40,7 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 Start the observability stack (Prometheus and Grafana) in the background:
 
 ```bash
-docker-compose up -d prometheus grafana
+docker-compose -p sentinel_demo up -d
 
 ```
 
@@ -48,15 +48,15 @@ docker-compose up -d prometheus grafana
 Start the Sentinel container in an interactive bash session:
 
 ```bash
-docker-compose run --rm sentinel /bin/bash
+docker exec -it sentinel_demo_sentinel_1 /bin/bash
 
 ```
 
 **3. Run a test case**
-Inside the container, run the memory leaker:
+Inside the container, run the test cases:
 
 ```bash
-sentinel python3 tests/leaker.py
+sentinel python3 tests/mod_simulator.py
 
 ```
 
