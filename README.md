@@ -38,6 +38,17 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 ---
 
 ### Setup and Launch
+**0. NEW: I added a Makefile to run commands that are done manual below easy** 
+ - Demo: to start web and tui concurrently, open: if web is running, rebuild, start, clean, bash serve as debugging 
+
+```bash
+make demo
+make open
+make rebuild
+make start
+make clean
+make bash  
+```
 
 **1. Build the environment**
 Start the observability stack (Prometheus and Grafana) in the background:
@@ -63,7 +74,7 @@ sentinel python3 tests/mod_simulator.py
 
 ```
 
-**4. Open up Web Interface
+**4. Open up Web Interface**
 ```bash
 docker exec -it sentinel_sentinel_1 python3 app/web_control.py
 ```
