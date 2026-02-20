@@ -2,14 +2,17 @@
 Think of Sentinel as a digital "bouncer" for your computer. It’s a high-performance tool designed to watch specific programs (like games, data science models, or servers) and make sure they don’t "misbehave" by hogging all your system’s memory.
 
 ## Architecture
-<img width="983" height="781" alt="image" src="https://github.com/user-attachments/assets/38b283c2-2daa-42c1-85de-f0e8d9e75ff8" />
+<img width="783" height="781" alt="image" src="https://github.com/user-attachments/assets/38b283c2-2daa-42c1-85de-f0e8d9e75ff8" />
 
 ## Terminal UI
 <img width="647" height="130" alt="image" src="https://github.com/user-attachments/assets/ed2d995c-9ef6-4020-ae5c-c459622b3a0d" />
 
+## Web Interface
+<img width="503" height="411" alt="image" src="https://github.com/user-attachments/assets/bfef6a08-909d-4a7f-b16c-2c4cbd053019" />
+
 ## Dashboard
-<img width="1222" height="476" alt="gauge_mod" src="https://github.com/user-attachments/assets/e84ec790-d61a-4f9f-b006-bf63b06fffa9" />
-<img width="1215" height="423" alt="test_mod" src="https://github.com/user-attachments/assets/53183c75-8065-48e2-8b06-8c4bea835161" />
+<img width="1022" height="476" alt="gauge_mod" src="https://github.com/user-attachments/assets/e84ec790-d61a-4f9f-b006-bf63b06fffa9" />
+<img width="1015" height="423" alt="test_mod" src="https://github.com/user-attachments/assets/53183c75-8065-48e2-8b06-8c4bea835161" />
 
 ### Core Concepts
 
@@ -40,7 +43,7 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 Start the observability stack (Prometheus and Grafana) in the background:
 
 ```bash
-docker-compose -p sentinel_demo up -d
+docker-compose up -d --build
 
 ```
 
@@ -48,7 +51,7 @@ docker-compose -p sentinel_demo up -d
 Start the Sentinel container in an interactive bash session:
 
 ```bash
-docker exec -it sentinel_demo_sentinel_1 /bin/bash
+docker exec -it sentinel_sentinel_1 /bin/bash
 
 ```
 
@@ -58,6 +61,11 @@ Inside the container, run the test cases:
 ```bash
 sentinel python3 tests/mod_simulator.py
 
+```
+
+**4. Open up Web Interface
+```bash
+docker exec -it sentinel_sentinel_1 python3 app/web_control.py
 ```
 
 ### Testing the "Backdoor"
