@@ -30,7 +30,7 @@ def main():
 
     # creating instance of process manager and server
     guardian = Guardian(cmd, limit)
-    server = IPCServer()
+    server = IPCServer(guardian)
 
     guardian.start()
     server.start()
@@ -40,8 +40,8 @@ def main():
     # manage process while it's running
     with Live(generate_dashboard(guardian), refresh_per_second=4) as live:
         try:
-            while not guardian.poll():
-                if guardian.process:
+            while True:
+                if guardian.process and not guardian.poll():
                     try:
                         p = psutil.Process(guardian.process.pid)
                         # oneshot to minimize system calls in Docker
@@ -57,14 +57,20 @@ def main():
                 conn, msg = server.check_for_client()
                 if msg:
                     if msg == "status":
-                        res = f"Guardian: {guardian.get_status()}\n"
+                        # We send the raw number for the web progress bar
+                        res = f"{guardian.get_current_memory():.2f}"
                         conn.sendall(res.encode())
                     elif msg == "stop":
                         guardian.kill()
                         break
-                    conn.close() # we close our line after msg
-                # lets verify our mem-usage here
-                guardian.check_resources()
+                    elif msg.startswith("run:"):
+                        # We send back the response from our new handle_command logic
+                        response = server.handle_command(msg)
+                        conn.sendall(response.encode())
+
+                    conn.close() # we close our line after msg  
+                if guardian.process and not guardian.poll():
+                    guardian.check_resources()
                 # update dashboard
                 live.update(generate_dashboard(guardian))
                 time.sleep(0.5)

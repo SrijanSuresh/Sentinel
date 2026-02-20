@@ -5,7 +5,7 @@ WORKDIR /app
 # linux commmands on startup
 RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
 # python modules
-RUN pip install --no-cache-dir psutil rich prometheus_client
+RUN pip install --no-cache-dir psutil rich prometheus_client flask
 # copy code to docker container
 COPY . .
 # install package for entrypoint

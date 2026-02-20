@@ -44,3 +44,33 @@ class Guardian:
         except psutil.NoSuchProcess as e:
             print(f"{e}: race condition, process ended before memory calculation")
 
+    # for web
+    def start_new_process(self, cmd_list):
+        try:
+            print(f"DEBUG: Guardian killing old process (PID: {self.process.pid if self.process else 'N/A'})") #
+            if self.process and self.process.poll() is None:
+                self.kill()
+            
+            self.cmd = cmd_list
+            print(f"DEBUG: Calling Popen with: {self.cmd}") #
+            
+            self.process = subprocess.Popen(
+                self.cmd, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                text=True,
+                cwd="/app" 
+            )            
+            return True
+        except Exception as e:
+            print(f"DEBUG: FAILED TO START! Error: {e}") # THE CULPRIT
+            return False
+        
+    def get_current_memory(self):
+        if self.process and self.process.poll() is None:
+            try:
+                # Fresh RSS pull from the OS
+                return psutil.Process(self.process.pid).memory_info().rss / (1024**2)
+            except (psutil.NoSuchProcess, AttributeError):
+                return 0
+        return 0
