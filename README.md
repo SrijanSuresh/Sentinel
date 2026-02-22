@@ -8,7 +8,7 @@ Think of Sentinel as a digital "bouncer" for your computer. It’s a high-perfor
 <img width="647" height="130" alt="image" src="https://github.com/user-attachments/assets/ed2d995c-9ef6-4020-ae5c-c459622b3a0d" />
 
 ## Web Interface
-<img width="503" height="411" alt="image" src="https://github.com/user-attachments/assets/bfef6a08-909d-4a7f-b16c-2c4cbd053019" />
+<img width="442" height="597" alt="image" src="https://github.com/user-attachments/assets/1bb15b7b-7280-4056-ae95-4d54e8b70354" />
 
 ## Dashboard
 <img width="1022" height="476" alt="gauge_mod" src="https://github.com/user-attachments/assets/e84ec790-d61a-4f9f-b006-bf63b06fffa9" />
